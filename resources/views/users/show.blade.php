@@ -139,7 +139,7 @@
             </div>
 
             @if ($post->image_path)
-                <img src="{{ asset('path/to/post/image.jpg') }}" alt="Post Image">
+                <img src="{{ Storage::disk('s3')->url($post->image_path) }}" alt="Post Image">
             @endif
 
             <div class="post_footer">

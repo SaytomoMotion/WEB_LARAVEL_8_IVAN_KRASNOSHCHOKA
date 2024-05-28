@@ -2,23 +2,28 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Post;
-use Illuminate\Support\Facades\Auth;
-
 use App\Models\User;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
-use App\Http\Controllers\PostController;
-use Illuminate\Support\Facades\Route;
-
-Route::get('/', [PostController::class, 'index'])->name('posts.index');
 
 class PostController extends Controller
 {
+    public function userPosts()
+    {
+        $userId = Auth::id();
+        $posts = Post::with('user')->where('user_id', $userId)->latest()->get();
+        $users = User::where('id', '!=', $userId)->get();
+        return view('dashboard', compact('posts', 'users'));
+    }
+
     public function index()
     {
         $posts = Post::with('user')->latest()->get();
-        return view('welcome', compact('posts'));
+        $userId = Auth::id();
+        $users = User::where('id', '!=', $userId)->get();
+        return view('welcome', compact('posts', 'users'));
     }
 
     public function store(Request $request)
@@ -44,23 +49,13 @@ class PostController extends Controller
         if ($post->user_id != Auth::id()) {
             abort(403);
         }
-    
+
         if ($post->image_path) {
             Storage::disk('s3')->delete($post->image_path);
         }
-    
+
         $post->delete();
-    
-        return redirect()->route('dashboard');
-    }
 
-
-    public function userPosts()
-    {
-        $userId = Auth::id();
-        $posts = Post::with('user')->where('user_id', $userId)->latest()->get();
-        $users = User::where('id', '!=', $userId)->get();
-        return view('dashboard', compact('posts', 'users'));
+        return redirect()->route('posts.index');
     }
-    
 }
